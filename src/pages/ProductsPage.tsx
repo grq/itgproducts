@@ -1,219 +1,411 @@
+import { useState, useMemo } from 'react'
+import { observer } from 'mobx-react-lite'
 import { Link } from '@tanstack/react-router'
-
 import {
-  PageLayout,
-  PageHeader,
-  ContentCard,
-  SectionHeader,
-  SectionTitle,
-  SectionActions,
-} from '@/components/ui/page-layout'
-import { SearchInput } from '@/components/ui/search-input'
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+  type ColumnDef,
+  type ColumnFiltersState,
+  type SortingState,
+  type VisibilityState,
+} from '@tanstack/react-table'
+import { ArrowUpDown, CircleEllipsis, PlusCircle, RefreshCw, Search } from 'lucide-react'
+
+import { rootStore } from '@/stores'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
 import {
-  DataTable,
-  DataTableHeader,
-  DataTableHeaderCell,
-  DataTableRow,
-  ProductThumbnail,
-  ProductInfo,
-  ProductName,
-  ProductCategory,
-  Rating,
-  Price,
-  TableCellCheckbox,
-  ActionBadge,
-  RowActions,
-} from '@/components/ui/data-table'
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import {
-  Pagination,
-  PaginationInfo,
-  PaginationNav,
-  PaginationPrev,
-  PaginationNext,
-  PaginationPages,
-  PaginationPage,
-} from '@/components/ui/pagination'
-import { ArrowUpDown, CircleEllipsis, PlusCircle, RefreshCw } from 'lucide-react'
-import { useAuth } from '@/context/auth'
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
-type RowModel = {
+type Product = {
   id: string
   name: string
-  nameVariant?: 'default' | 'dark'
   category: string
   vendor: string
   sku: string
-  rating: { value: string; low?: boolean }
-  price: { main: string; decimal: string }
-  selected?: boolean
+  rating: number
+  price: number
+  image?: string
 }
 
-const MOCK_ROWS: RowModel[] = [
+const MOCK_PRODUCTS: Product[] = [
   {
     id: '1',
     name: 'USB Флэшкарта 16GB',
     category: 'Аксессуары',
     vendor: 'Samsung',
     sku: 'RCH45Q1A',
-    rating: { value: '4.3' },
-    price: { main: '48 652', decimal: ',00' },
+    rating: 4.3,
+    price: 48652,
   },
   {
     id: '2',
     name: 'Утюг Braun TexStyle 9',
-    nameVariant: 'dark',
     category: 'Бытовая техника',
     vendor: 'TexStyle',
     sku: 'DFCHQ1A',
-    rating: { value: '4.9' },
-    price: { main: '4 233', decimal: ',00' },
+    rating: 4.9,
+    price: 4233,
   },
   {
     id: '3',
     name: 'Смартфон Apple iPhone 17',
-    nameVariant: 'dark',
     category: 'Телефоны',
     vendor: 'Apple',
     sku: 'GUYHD2-X4',
-    rating: { value: '4.7' },
-    price: { main: '88 652', decimal: ',00' },
-    selected: true,
+    rating: 4.7,
+    price: 88652,
   },
   {
     id: '4',
-    name: 'Игровая консоль PlaySta...',
-    nameVariant: 'dark',
+    name: 'Игровая консоль PlayStation 5',
     category: 'Игровые приставки',
     vendor: 'Sony',
     sku: 'HT45Q21',
-    rating: { value: '4.1' },
-    price: { main: '56 236', decimal: ',00' },
+    rating: 4.1,
+    price: 56236,
   },
   {
     id: '5',
     name: 'Фен Dyson Supersonic Nural',
-    nameVariant: 'dark',
     category: 'Электроника',
     vendor: 'Dyson',
     sku: 'FJHHGF-CR4',
-    rating: { value: '3.3', low: true },
-    price: { main: '48 652', decimal: ',00' },
+    rating: 3.3,
+    price: 48652,
   },
 ]
 
-function ProductRow({ row }: { row: RowModel }) {
-  return (
-    <DataTableRow selected={row.selected}>
-      <div
-        className={`flex shrink-0 items-center gap-[18px] ${row.selected ? 'w-[316px]' : 'w-[278px]'}`}
-      >
-        <TableCellCheckbox checked={row.selected} />
-        <ProductThumbnail />
-        <ProductInfo>
-          <ProductName variant={row.nameVariant}>{row.name}</ProductName>
-          <ProductCategory>{row.category}</ProductCategory>
-        </ProductInfo>
-      </div>
+const ProductImage = ({ product }: { product: Product }) => (
+  <div className="flex h-12 w-12 items-center justify-center rounded-lg border bg-muted">
+    <span className="text-xs font-medium text-muted-foreground">
+      {product.name.charAt(0)}
+    </span>
+  </div>
+)
 
-      <div
-        className={`flex min-w-0 max-w-full flex-1 items-center gap-[132px] ${row.selected ? 'pl-[163px]' : ''}`}
-      >
-        <p className="m-0 w-[125px] text-center font-sans text-base font-bold leading-none text-products-text">
-          {row.vendor}
-        </p>
-        <p className="m-0 w-[160px] text-center font-sans text-base font-normal leading-none text-products-text">
-          {row.sku}
-        </p>
-        <Rating value={row.rating.value} variant={row.rating.low ? 'low' : 'default'} />
-        <Price main={row.price.main} decimal={row.price.decimal} />
-        <RowActions>
-          <ActionBadge>
-            <ArrowUpDown className="size-6 text-white" aria-hidden strokeWidth={1.6} />
-          </ActionBadge>
-          <CircleEllipsis className="size-8 text-[#b2b3b9]" aria-hidden strokeWidth={1.5} />
-        </RowActions>
-      </div>
-    </DataTableRow>
-  )
+const RatingBadge = ({ rating }: { rating: number }) => (
+  <div className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+    rating >= 4.5 ? 'bg-green-100 text-green-800' :
+    rating >= 4.0 ? 'bg-blue-100 text-blue-800' :
+    rating >= 3.5 ? 'bg-yellow-100 text-yellow-800' :
+    'bg-red-100 text-red-800'
+  }`}>
+    ★ {rating.toFixed(1)}
+  </div>
+)
+
+const PriceDisplay = ({ price }: { price: number }) => {
+  const formatted = new Intl.NumberFormat('ru-RU', {
+    style: 'currency',
+    currency: 'RUB',
+    minimumFractionDigits: 0,
+  }).format(price)
+  
+  return <div className="font-medium">{formatted}</div>
 }
 
-export function ProductsPage() {
-  const { user, logout } = useAuth()
+export const ProductsPage = observer(function ProductsPage() {
+  const { user, logout } = rootStore.authStore
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [rowSelection, setRowSelection] = useState({})
 
-  return (
-    <PageLayout variant="products">
-      <PageHeader title="Товары">
-        <div className="flex h-[100px] flex-1 items-center justify-center">
-          <SearchInput placeholder="Найти" />
+  const columns: ColumnDef<Product>[] = useMemo(() => [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && 'indeterminate')
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Выбрать все"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Выбрать строку"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: 'name',
+      header: 'Наименование',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3">
+          <ProductImage product={row.original} />
+          <div>
+            <div className="font-medium">{row.getValue('name')}</div>
+            <div className="text-sm text-muted-foreground">{row.original.category}</div>
+          </div>
         </div>
-      </PageHeader>
+      ),
+    },
+    {
+      accessorKey: 'vendor',
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          className="h-8 px-2"
+        >
+          Вендор
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => <div className="font-medium">{row.getValue('vendor')}</div>,
+    },
+    {
+      accessorKey: 'sku',
+      header: 'Артикул',
+      cell: ({ row }) => (
+        <div className="font-mono text-sm">{row.getValue('sku')}</div>
+      ),
+    },
+    {
+      accessorKey: 'rating',
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          className="h-8 px-2"
+        >
+          Оценка
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => <RatingBadge rating={row.getValue('rating')} />,
+    },
+    {
+      accessorKey: 'price',
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          className="h-8 px-2"
+        >
+          Цена
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => <PriceDisplay price={row.getValue('price')} />,
+    },
+    {
+      id: 'actions',
+      enableHiding: false,
+      cell: ({ row }) => {
+        const product = row.original
 
-      <ContentCard>
-        <SectionHeader>
-          <SectionTitle>Все позиции</SectionTitle>
-          <SectionActions>
-            <Button variant="icon-outline" size="icon">
-              <RefreshCw className="size-[22px]" aria-hidden strokeWidth={1.5} />
-            </Button>
-            <Button variant="products">
-              <PlusCircle className="size-[22px]" aria-hidden strokeWidth={1.5} />
-              <span>Добавить</span>
-            </Button>
-          </SectionActions>
-        </SectionHeader>
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Открыть меню</span>
+                <CircleEllipsis className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Действия</DropdownMenuLabel>
+              <DropdownMenuItem
+                onClick={() => navigator.clipboard.writeText(product.id)}
+              >
+                Копировать ID
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>Просмотреть детали</DropdownMenuItem>
+              <DropdownMenuItem>Редактировать</DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive">
+                Удалить
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
+      },
+    },
+  ], [])
 
-        <DataTable>
-          <DataTableHeader>
-            <div className="flex w-[278px] shrink-0 items-center gap-5">
-              <TableCellCheckbox />
-              <DataTableHeaderCell>Наименование</DataTableHeaderCell>
+  const table = useReactTable({
+    data: MOCK_PRODUCTS,
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+    },
+  })
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto py-8">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-2xl font-bold">Товары</CardTitle>
+                <CardDescription>
+                  Управление каталогом товаров
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm">
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Обновить
+                </Button>
+                <Button size="sm">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Добавить товар
+                </Button>
+              </div>
             </div>
-            <div className="flex w-[1218px] shrink-0 items-center justify-center gap-[150px]">
-              <DataTableHeaderCell className="w-[125px]">Вендор</DataTableHeaderCell>
-              <DataTableHeaderCell className="w-[125px]">Артикул</DataTableHeaderCell>
-              <DataTableHeaderCell className="w-[125px]">Оценка</DataTableHeaderCell>
-              <DataTableHeaderCell className="w-[125px]">Цена, ₽</DataTableHeaderCell>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center py-4">
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Поиск товаров..."
+                  value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
+                  onChange={(event) =>
+                    table.getColumn('name')?.setFilterValue(event.target.value)
+                  }
+                  className="pl-8 max-w-sm"
+                />
+              </div>
             </div>
-          </DataTableHeader>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <TableHead key={header.id}>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableHeader>
+                <TableBody>
+                  {table.getRowModel().rows?.length ? (
+                    table.getRowModel().rows.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        data-state={row.getIsSelected() && 'selected'}
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell key={cell.id}>
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={columns.length}
+                        className="h-24 text-center"
+                      >
+                        Товары не найдены.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="flex items-center justify-end space-x-2 py-4">
+              <div className="flex-1 text-sm text-muted-foreground">
+                {table.getFilteredSelectedRowModel().rows.length} из{' '}
+                {table.getFilteredRowModel().rows.length} строк выбрано.
+              </div>
+              <div className="space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => table.previousPage()}
+                  disabled={!table.getCanPreviousPage()}
+                >
+                  Назад
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => table.nextPage()}
+                  disabled={!table.getCanNextPage()}
+                >
+                  Вперед
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          {MOCK_ROWS.map((row) => (
-            <ProductRow key={row.id} row={row} />
-          ))}
-        </DataTable>
-
-        <Pagination>
-          <PaginationInfo from={1} to={20} total={120} />
-          <PaginationNav>
-            <PaginationPrev />
-            <PaginationPages>
-              <PaginationPage page={1} active />
-              <PaginationPage page={2} />
-              <PaginationPage page={3} />
-              <PaginationPage page={4} />
-              <PaginationPage page={5} />
-            </PaginationPages>
-            <PaginationNext />
-          </PaginationNav>
-        </Pagination>
-      </ContentCard>
-
-      <nav
-        className="fixed right-3 bottom-3 z-10 flex gap-2 text-xs text-products-primary underline"
-        aria-label="Макеты"
-      >
-        {user && (
-          <>
-            <span className="text-products-text no-underline">
-              {user.firstName} {user.lastName}
-            </span>
-            <button onClick={logout} className="cursor-pointer">
-              Выйти
-            </button>
-          </>
-        )}
-        <Link to="/login">Авторизация</Link>
-      </nav>
-    </PageLayout>
+        <nav
+          className="fixed right-3 bottom-3 z-10 flex gap-2 text-xs text-primary underline"
+          aria-label="Макеты"
+        >
+          {user && (
+            <>
+              <span className="text-muted-foreground no-underline">
+                {user.firstName} {user.lastName}
+              </span>
+              <button onClick={() => logout()} className="cursor-pointer">
+                Выйти
+              </button>
+            </>
+          )}
+          <Link to="/login">Авторизация</Link>
+        </nav>
+      </div>
+    </div>
   )
-}
+})

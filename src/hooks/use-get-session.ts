@@ -3,7 +3,7 @@ import Cookies from 'js-cookie'
 import { endpoint } from '@/api/endpoint'
 import { get } from '@/api/get'
 import { queryKeys } from '@/api/query-keys'
-import { AUTH_TOKEN_COOKIE_KEY } from '@/context/auth/constants'
+import { AUTH_TOKEN_COOKIE_KEY } from '@/stores'
 import type { User } from '@/interfaces'
 
 export function useGetSession(enabled: boolean) {

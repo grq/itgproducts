@@ -2,7 +2,7 @@ import { useNavigate, useSearch } from "@tanstack/react-router"
 import { useMutation } from "@tanstack/react-query"
 import { endpoint } from "@/api/endpoint"
 import { post } from "@/api/post"
-import { useAuth } from "@/context/auth"
+import { rootStore } from '@/stores'
 import type { AuthResponse, LoginData } from "@/interfaces"
 
 interface LoginOptions {
@@ -10,7 +10,7 @@ interface LoginOptions {
 }
 
 export function useLogin() {
-  const { login: setAuth } = useAuth()
+  const { login: setAuth } = rootStore.authStore
   const navigate = useNavigate()
   const search = useSearch({ from: '/login' }) as { redirect?: string }
 

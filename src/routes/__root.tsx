@@ -1,5 +1,5 @@
 import { RootLayout } from '@/layout/root'
-import { AUTH_TOKEN_COOKIE_KEY } from '@/context/auth'
+import { AUTH_TOKEN_COOKIE_KEY } from '@/stores'
 import { createRootRoute, redirect } from '@tanstack/react-router'
 import Cookies from 'js-cookie'
 
