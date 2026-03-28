@@ -1,1 +1,1 @@
-# itgproducts
+# AiTi Guru Products

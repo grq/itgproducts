@@ -1,0 +1,7 @@
+export function LoadingLayout() {
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <div className="text-lg">Loading...</div>
+    </div>
+  )
+}
