@@ -2,12 +2,10 @@ import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { Slot } from "radix-ui"
 
-/* eslint-disable react-refresh/only-export-components */
-
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 cursor-pointer",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -21,20 +19,6 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
-        auth: [
-          "relative w-full overflow-hidden rounded-xl border border-login-primary-ring",
-          "py-4 text-[18px] font-semibold leading-[1.2] tracking-[-0.18px] text-white",
-          "bg-login-primary",
-          "before:absolute before:inset-0 before:bg-gradient-to-t before:from-transparent before:to-white/12",
-          "[&>*]:relative [&>*]:z-10",
-          "shadow-[inset_0_-2px_0_1px_rgba(0,0,0,0.08),0_8px_8px_0_rgba(54,122,255,0.03)]",
-        ].join(" "),
-        "icon-outline":
-          "rounded-lg border border-products-border-light bg-products-card p-2.5 hover:bg-muted",
-        products: [
-          "min-h-[42px] gap-[15px] rounded-md bg-products-primary px-5 py-2.5",
-          "font-heading text-sm font-semibold leading-none text-[#ebf3ea]",
-        ].join(" "),
       },
       size: {
         default:
@@ -48,7 +32,6 @@ const buttonVariants = cva(
         "icon-sm":
           "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
         "icon-lg": "size-9",
-        auth: "h-auto px-2",
       },
     },
     defaultVariants: {

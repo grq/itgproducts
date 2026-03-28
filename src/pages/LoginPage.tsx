@@ -236,7 +236,7 @@ export function LoginPage() {
               />
 
               <div className="flex flex-col gap-4">
-                <Button type="submit" variant="auth" size="auth" disabled={isPending}>
+                <Button type="submit" disabled={isPending}>
                   <span>{isPending ? 'Вход...' : 'Войти'}</span>
                 </Button>
                 <AuthCardDivider>или</AuthCardDivider>

@@ -1,21 +1,18 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { observer } from 'mobx-react-lite'
 import { Link } from '@tanstack/react-router'
 import {
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
-  type ColumnFiltersState,
   type SortingState,
-  type VisibilityState,
 } from '@tanstack/react-table'
 import { ArrowUpDown, CircleEllipsis, PlusCircle, RefreshCw, Search } from 'lucide-react'
 
 import { rootStore } from '@/stores'
+import type { Product } from '@/interfaces'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
@@ -42,70 +39,32 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-
-type Product = {
-  id: string
-  name: string
-  category: string
-  vendor: string
-  sku: string
-  rating: number
-  price: number
-  image?: string
-}
-
-const MOCK_PRODUCTS: Product[] = [
-  {
-    id: '1',
-    name: 'USB Флэшкарта 16GB',
-    category: 'Аксессуары',
-    vendor: 'Samsung',
-    sku: 'RCH45Q1A',
-    rating: 4.3,
-    price: 48652,
-  },
-  {
-    id: '2',
-    name: 'Утюг Braun TexStyle 9',
-    category: 'Бытовая техника',
-    vendor: 'TexStyle',
-    sku: 'DFCHQ1A',
-    rating: 4.9,
-    price: 4233,
-  },
-  {
-    id: '3',
-    name: 'Смартфон Apple iPhone 17',
-    category: 'Телефоны',
-    vendor: 'Apple',
-    sku: 'GUYHD2-X4',
-    rating: 4.7,
-    price: 88652,
-  },
-  {
-    id: '4',
-    name: 'Игровая консоль PlayStation 5',
-    category: 'Игровые приставки',
-    vendor: 'Sony',
-    sku: 'HT45Q21',
-    rating: 4.1,
-    price: 56236,
-  },
-  {
-    id: '5',
-    name: 'Фен Dyson Supersonic Nural',
-    category: 'Электроника',
-    vendor: 'Dyson',
-    sku: 'FJHHGF-CR4',
-    rating: 3.3,
-    price: 48652,
-  },
-]
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination'
 
 const ProductImage = ({ product }: { product: Product }) => (
-  <div className="flex h-12 w-12 items-center justify-center rounded-lg border bg-muted">
-    <span className="text-xs font-medium text-muted-foreground">
-      {product.name.charAt(0)}
+  <div className="flex h-12 w-12 items-center justify-center rounded-lg border bg-muted overflow-hidden">
+    {product.thumbnail ? (
+      <img 
+        src={product.thumbnail} 
+        alt={product.title}
+        className="h-full w-full object-cover"
+        onError={(e) => {
+          const target = e.target as HTMLImageElement
+          target.style.display = 'none'
+          target.nextElementSibling?.classList.remove('hidden')
+        }}
+      />
+    ) : null}
+    <span className={`text-xs font-medium text-muted-foreground ${product.thumbnail ? 'hidden' : ''}`}>
+      {product.title.charAt(0)}
     </span>
   </div>
 )
@@ -121,22 +80,62 @@ const RatingBadge = ({ rating }: { rating: number }) => (
   </div>
 )
 
-const PriceDisplay = ({ price }: { price: number }) => {
-  const formatted = new Intl.NumberFormat('ru-RU', {
-    style: 'currency',
-    currency: 'RUB',
-    minimumFractionDigits: 0,
-  }).format(price)
+const PriceDisplay = ({ price, discountPercentage }: { price: number; discountPercentage?: number }) => {
+  const hasDiscount = discountPercentage && discountPercentage > 0
+  const originalPrice = hasDiscount ? price / (1 - discountPercentage / 100) : price
   
-  return <div className="font-medium">{formatted}</div>
+  return (
+    <div className="text-right">
+      <div className="font-medium">${price.toFixed(2)}</div>
+      {hasDiscount && (
+        <div className="text-xs text-muted-foreground line-through">
+          ${originalPrice.toFixed(2)}
+        </div>
+      )}
+    </div>
+  )
+}
+
+const StockBadge = ({ stock }: { stock: number; availabilityStatus: string }) => {
+  const getStockColor = () => {
+    if (stock === 0) return 'bg-red-100 text-red-800'
+    if (stock < 10) return 'bg-yellow-100 text-yellow-800'
+    return 'bg-green-100 text-green-800'
+  }
+
+  return (
+    <div className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getStockColor()}`}>
+      {stock} шт.
+    </div>
+  )
 }
 
 export const ProductsPage = observer(function ProductsPage() {
   const { user, logout } = rootStore.authStore
+  const productsStore = rootStore.productsStore
+  const [searchInput, setSearchInput] = useState('')
   const [sorting, setSorting] = useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
+
+  useEffect(() => {
+    productsStore.fetchProducts()
+  }, [productsStore])
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchInput(value)
+    productsStore.debouncedSearch(value)
+  }, [productsStore])
+
+  const handleSortingChange = useCallback((updaterOrValue: SortingState | ((old: SortingState) => SortingState)) => {
+    const newSorting = typeof updaterOrValue === 'function' ? updaterOrValue(sorting) : updaterOrValue
+    setSorting(newSorting)
+    const sort = newSorting[0]
+    if (sort) {
+      productsStore.setSorting(sort.id, sort.desc ? 'desc' : 'asc')
+    } else {
+      productsStore.setSorting(undefined)
+    }
+  }, [productsStore, sorting])
 
   const columns: ColumnDef<Product>[] = useMemo(() => [
     {
@@ -162,31 +161,31 @@ export const ProductsPage = observer(function ProductsPage() {
       enableHiding: false,
     },
     {
-      accessorKey: 'name',
+      accessorKey: 'title',
       header: 'Наименование',
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
           <ProductImage product={row.original} />
           <div>
-            <div className="font-medium">{row.getValue('name')}</div>
+            <div className="font-medium">{row.getValue('title')}</div>
             <div className="text-sm text-muted-foreground">{row.original.category}</div>
           </div>
         </div>
       ),
     },
     {
-      accessorKey: 'vendor',
+      accessorKey: 'brand',
       header: ({ column }) => (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
           className="h-8 px-2"
         >
-          Вендор
+          Бренд
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
-      cell: ({ row }) => <div className="font-medium">{row.getValue('vendor')}</div>,
+      cell: ({ row }) => <div className="font-medium">{row.getValue('brand') || 'N/A'}</div>,
     },
     {
       accessorKey: 'sku',
@@ -210,6 +209,16 @@ export const ProductsPage = observer(function ProductsPage() {
       cell: ({ row }) => <RatingBadge rating={row.getValue('rating')} />,
     },
     {
+      accessorKey: 'stock',
+      header: 'Остаток',
+      cell: ({ row }) => (
+        <StockBadge 
+          stock={row.getValue('stock')} 
+          availabilityStatus={row.original.availabilityStatus}
+        />
+      ),
+    },
+    {
       accessorKey: 'price',
       header: ({ column }) => (
         <Button
@@ -221,7 +230,12 @@ export const ProductsPage = observer(function ProductsPage() {
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
-      cell: ({ row }) => <PriceDisplay price={row.getValue('price')} />,
+      cell: ({ row }) => (
+        <PriceDisplay 
+          price={row.getValue('price')} 
+          discountPercentage={row.original.discountPercentage}
+        />
+      ),
     },
     {
       id: 'actions',
@@ -240,7 +254,7 @@ export const ProductsPage = observer(function ProductsPage() {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Действия</DropdownMenuLabel>
               <DropdownMenuItem
-                onClick={() => navigator.clipboard.writeText(product.id)}
+                onClick={() => navigator.clipboard.writeText(product.id.toString())}
               >
                 Копировать ID
               </DropdownMenuItem>
@@ -258,23 +272,107 @@ export const ProductsPage = observer(function ProductsPage() {
   ], [])
 
   const table = useReactTable({
-    data: MOCK_PRODUCTS,
+    data: productsStore.products,
     columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
+    onSortingChange: handleSortingChange,
     onRowSelectionChange: setRowSelection,
     state: {
       sorting,
-      columnFilters,
-      columnVisibility,
       rowSelection,
     },
+    manualSorting: true, // We handle sorting via MobX store
+    manualPagination: true, // We handle pagination via MobX store
   })
+
+  const renderPagination = () => {
+    if (productsStore.totalPages <= 1) return null
+
+    const getVisiblePages = () => {
+      const delta = 2
+      const range = []
+      const rangeWithDots = []
+      const currentPage = productsStore.currentPage
+      const totalPages = productsStore.totalPages
+
+      for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
+        range.push(i)
+      }
+
+      if (currentPage - delta > 2) {
+        rangeWithDots.push(1, '...')
+      } else {
+        rangeWithDots.push(1)
+      }
+
+      rangeWithDots.push(...range)
+
+      if (currentPage + delta < totalPages - 1) {
+        rangeWithDots.push('...', totalPages)
+      } else if (totalPages > 1) {
+        rangeWithDots.push(totalPages)
+      }
+
+      return rangeWithDots
+    }
+
+    return (
+      <Pagination>
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious 
+              onClick={() => productsStore.setCurrentPage(Math.max(1, productsStore.currentPage - 1))}
+              className={productsStore.currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+            />
+          </PaginationItem>
+          
+          {getVisiblePages().map((page, index) => (
+            <PaginationItem key={index}>
+              {page === '...' ? (
+                <PaginationEllipsis />
+              ) : (
+                <PaginationLink
+                  onClick={() => productsStore.setCurrentPage(page as number)}
+                  isActive={productsStore.currentPage === page}
+                  className="cursor-pointer"
+                >
+                  {page}
+                </PaginationLink>
+              )}
+            </PaginationItem>
+          ))}
+          
+          <PaginationItem>
+            <PaginationNext 
+              onClick={() => productsStore.setCurrentPage(Math.min(productsStore.totalPages, productsStore.currentPage + 1))}
+              className={productsStore.currentPage === productsStore.totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
+    )
+  }
+
+  if (productsStore.error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto py-8">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <h2 className="text-lg font-semibold text-destructive">Ошибка загрузки данных</h2>
+                <p className="text-muted-foreground mt-2">{productsStore.error}</p>
+                <Button onClick={() => productsStore.refreshProducts()} className="mt-4">
+                  Попробовать снова
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -285,12 +383,17 @@ export const ProductsPage = observer(function ProductsPage() {
               <div>
                 <CardTitle className="text-2xl font-bold">Товары</CardTitle>
                 <CardDescription>
-                  Управление каталогом товаров
+                  Управление каталогом товаров ({productsStore.total} товаров)
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm">
-                  <RefreshCw className="mr-2 h-4 w-4" />
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => productsStore.refreshProducts()} 
+                  disabled={productsStore.isLoading}
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${productsStore.isLoading ? 'animate-spin' : ''}`} />
                   Обновить
                 </Button>
                 <Button size="sm">
@@ -306,14 +409,13 @@ export const ProductsPage = observer(function ProductsPage() {
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Поиск товаров..."
-                  value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
-                  onChange={(event) =>
-                    table.getColumn('name')?.setFilterValue(event.target.value)
-                  }
+                  value={searchInput}
+                  onChange={(event) => handleSearchChange(event.target.value)}
                   className="pl-8 max-w-sm"
                 />
               </div>
             </div>
+            
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
@@ -333,7 +435,16 @@ export const ProductsPage = observer(function ProductsPage() {
                   ))}
                 </TableHeader>
                 <TableBody>
-                  {table.getRowModel().rows?.length ? (
+                  {productsStore.isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={columns.length} className="h-24 text-center">
+                        <div className="flex items-center justify-center">
+                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                          Загрузка...
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : table.getRowModel().rows?.length ? (
                     table.getRowModel().rows.map((row) => (
                       <TableRow
                         key={row.id}
@@ -355,36 +466,20 @@ export const ProductsPage = observer(function ProductsPage() {
                         colSpan={columns.length}
                         className="h-24 text-center"
                       >
-                        Товары не найдены.
+                        {productsStore.searchQuery ? 'Товары не найдены по запросу.' : 'Товары не найдены.'}
                       </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               </Table>
             </div>
-            <div className="flex items-center justify-end space-x-2 py-4">
+            
+            <div className="flex items-center justify-between space-x-2 py-4">
               <div className="flex-1 text-sm text-muted-foreground">
                 {table.getFilteredSelectedRowModel().rows.length} из{' '}
-                {table.getFilteredRowModel().rows.length} строк выбрано.
+                {productsStore.products.length} строк выбрано.
               </div>
-              <div className="space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => table.previousPage()}
-                  disabled={!table.getCanPreviousPage()}
-                >
-                  Назад
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => table.nextPage()}
-                  disabled={!table.getCanNextPage()}
-                >
-                  Вперед
-                </Button>
-              </div>
+              {renderPagination()}
             </div>
           </CardContent>
         </Card>

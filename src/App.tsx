@@ -15,11 +15,11 @@ declare module '@tanstack/react-router' {
   }
 }
 
-/* eslint-disable react-refresh/only-export-components */
 function App() {
   useEffect(() => {
     rootStore.authStore.setQueryClient(queryClient)
     rootStore.authStore.initSession()
+    rootStore.productsStore.setQueryClient(queryClient)
   }, [])
 
   return (
