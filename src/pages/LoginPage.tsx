@@ -66,7 +66,11 @@ export function LoginPage() {
 
   const handleClearLogin = useCallback(() => {
     reset()
-    formMethods.setValue('login', '', { shouldDirty: true, shouldTouch: true, shouldValidate: true })
+    formMethods.setValue('login', '', {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    })
     loginInputRef.current?.focus()
   }, [formMethods, reset])
 
@@ -77,7 +81,7 @@ export function LoginPage() {
   }, [error, reset])
 
   const handleTogglePasswordVisibility = useCallback(() => {
-    setShowPassword((v) => !v)
+    setShowPassword(v => !v)
   }, [])
 
   const handleRememberChange = useCallback(
@@ -107,18 +111,12 @@ export function LoginPage() {
       <main className="flex min-h-svh flex-col items-center justify-center bg-login-canvas p-4">
         <AuthCard>
           <AuthCardLogo>
-            <img
-              className="block h-[34px] w-[35px]"
-              src="/logo.svg"
-              alt=""
-            />
+            <img className="block h-[34px] w-[35px]" src="/logo.svg" alt="" />
           </AuthCardLogo>
 
           <AuthCardHeader>
             <AuthCardTitle>Добро пожаловать!</AuthCardTitle>
-            <AuthCardDescription>
-              Пожалуйста, авторизируйтесь
-            </AuthCardDescription>
+            <AuthCardDescription>Пожалуйста, авторизируйтесь</AuthCardDescription>
           </AuthCardHeader>
 
           <AuthCardContent>
@@ -129,14 +127,11 @@ export function LoginPage() {
               >
                 <AlertCircle className="size-4" />
                 <AlertTitle className="text-[15px] font-medium leading-relaxed">
-                {getErrorMessage(error.message)}
+                  {getErrorMessage(error.message)}
                 </AlertTitle>
               </Alert>
             )}
-            <form
-              className="flex flex-col gap-5"
-              onSubmit={formMethods.handleSubmit(onSubmit)}
-            >
+            <form className="flex flex-col gap-5" onSubmit={formMethods.handleSubmit(onSubmit)}>
               <div className="flex flex-col gap-4">
                 <FormField
                   control={formMethods.control}
@@ -147,7 +142,7 @@ export function LoginPage() {
                       <FormControl>
                         <InputField
                           {...field}
-                          onChange={(e) => {
+                          onChange={e => {
                             field.onChange(e)
                             handleFieldChange()
                           }}
@@ -183,7 +178,7 @@ export function LoginPage() {
                       <FormControl>
                         <InputField
                           {...field}
-                          onChange={(e) => {
+                          onChange={e => {
                             field.onChange(e)
                             handleFieldChange()
                           }}
@@ -252,7 +247,10 @@ export function LoginPage() {
           </AuthCardFooter>
         </AuthCard>
 
-        <nav className="fixed right-3 bottom-3 z-10 text-xs text-login-link underline" aria-label="Макеты">
+        <nav
+          className="fixed right-3 bottom-3 z-10 text-xs text-login-link underline"
+          aria-label="Макеты"
+        >
           <Link to="/">Товары</Link>
         </nav>
       </main>

@@ -28,7 +28,7 @@ export class AuthStore {
 
   async initSession() {
     const authToken = Cookies.get(AUTH_TOKEN_COOKIE_KEY)
-    
+
     if (!authToken) {
       runInAction(() => {
         this.isLoading = false
@@ -42,18 +42,18 @@ export class AuthStore {
         this.user = sessionUser
         this.isLoading = false
       })
-      
+
       if (this.queryClient) {
         this.queryClient.setQueryData(queryKeys.auth.me(), sessionUser)
       }
     } catch {
       logError('Session fetch failed')
       Cookies.remove(AUTH_TOKEN_COOKIE_KEY)
-      
+
       if (this.queryClient) {
         this.queryClient.removeQueries({ queryKey: queryKeys.auth.me() })
       }
-      
+
       runInAction(() => {
         this.user = null
         this.isLoading = false
@@ -89,11 +89,11 @@ export class AuthStore {
 
   logout = () => {
     Cookies.remove(AUTH_TOKEN_COOKIE_KEY)
-    
+
     if (this.queryClient) {
       this.queryClient.removeQueries({ queryKey: queryKeys.auth.me() })
     }
-    
+
     runInAction(() => {
       this.user = null
     })

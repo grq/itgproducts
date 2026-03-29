@@ -1,12 +1,16 @@
-import { logError } from "@/lib/logger"
+import { logError } from '@/lib/logger'
 
-export const get = async <T = unknown>(endpoint: string, token?: string, options?: Partial<RequestInit>) => {
+export const get = async <T = unknown>(
+  endpoint: string,
+  token?: string,
+  options?: Partial<RequestInit>
+) => {
   const url = `${import.meta.env.VITE_API_URL}/${endpoint}`
   const response = await fetch(url, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     ...options,
   })

@@ -1,13 +1,13 @@
-"use client"
+'use client'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import * as React from "react"
-import { Slot } from "radix-ui"
-import { Controller, FormProvider, useFormContext } from "react-hook-form"
+import * as React from 'react'
+import { Slot } from 'radix-ui'
+import { Controller, FormProvider, useFormContext } from 'react-hook-form'
 
-import { cn } from "@/lib/utils"
-import { Label } from "@/components/ui/label"
+import { cn } from '@/lib/utils'
+import { Label } from '@/components/ui/label'
 
 type FormItemContextValue = {
   id: string
@@ -23,7 +23,7 @@ const FormFieldContext = React.createContext<FormFieldContextValue | null>(null)
 function useFormItem() {
   const ctx = React.useContext(FormItemContext)
   if (!ctx) {
-    throw new Error("useFormItem must be used within <FormItem />")
+    throw new Error('useFormItem must be used within <FormItem />')
   }
   return ctx
 }
@@ -31,15 +31,13 @@ function useFormItem() {
 function useFormField() {
   const ctx = React.useContext(FormFieldContext)
   if (!ctx) {
-    throw new Error("useFormField must be used within <FormField />")
+    throw new Error('useFormField must be used within <FormField />')
   }
   return ctx
 }
 
 function getFieldError(formState: any, name: string) {
-  return name
-    .split(".")
-    .reduce((acc: any, key: string) => acc?.[key], formState?.errors)
+  return name.split('.').reduce((acc: any, key: string) => acc?.[key], formState?.errors)
 }
 
 export function Form({
@@ -67,14 +65,11 @@ export function FormField({
   )
 }
 
-export function FormItem({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+export function FormItem({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   const id = React.useId()
   return (
     <FormItemContext.Provider value={{ id }}>
-      <div className={cn("flex flex-col gap-1.5", className)} {...props} />
+      <div className={cn('flex flex-col gap-1.5', className)} {...props} />
     </FormItemContext.Provider>
   )
 }
@@ -84,15 +79,15 @@ export function FormLabel({
   variant,
   ...props
 }: React.ComponentProps<typeof Label> & {
-  variant?: "default" | "auth"
+  variant?: 'default' | 'auth'
 }) {
   const { id } = useFormItem()
   return (
     <Label
       htmlFor={`${id}-form-control`}
       className={cn(
-        variant === "auth" &&
-          "text-[18px] font-medium leading-normal tracking-[-0.27px] text-login-heading",
+        variant === 'auth' &&
+          'text-[18px] font-medium leading-normal tracking-[-0.27px] text-login-heading',
         className
       )}
       {...props}
@@ -128,9 +123,7 @@ export function FormMessage({ className, ...props }: React.HTMLAttributes<HTMLPa
   const { id } = useFormItem()
   const { name } = useFormField()
   const form = useFormContext()
-  const error = getFieldError(form.formState, name as string) as
-    | { message?: string }
-    | undefined
+  const error = getFieldError(form.formState, name as string) as { message?: string } | undefined
 
   const message = error?.message
   if (!message) return null
@@ -138,7 +131,7 @@ export function FormMessage({ className, ...props }: React.HTMLAttributes<HTMLPa
   return (
     <p
       id={`${id}-form-message`}
-      className={cn("text-sm font-medium text-destructive", className)}
+      className={cn('text-sm font-medium text-destructive', className)}
       {...props}
     >
       {String(message)}
@@ -154,7 +147,10 @@ export function FormDescription({
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   const { id } = useFormItem()
   return (
-    <p id={`${id}-form-description`} className={cn("text-sm text-muted-foreground", className)} {...props} />
+    <p
+      id={`${id}-form-description`}
+      className={cn('text-sm text-muted-foreground', className)}
+      {...props}
+    />
   )
 }
-

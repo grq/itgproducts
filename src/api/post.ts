@@ -1,6 +1,10 @@
-import { logError } from "@/lib/logger"
+import { logError } from '@/lib/logger'
 
-export const post = async <T = unknown, D = unknown>(endpoint: string, data: D, options?: Partial<RequestInit>): Promise<T> => {
+export const post = async <T = unknown, D = unknown>(
+  endpoint: string,
+  data: D,
+  options?: Partial<RequestInit>
+): Promise<T> => {
   const url = `${import.meta.env.VITE_API_URL}/${endpoint}`
   let body: string | undefined
   if (data) {
@@ -19,12 +23,12 @@ export const post = async <T = unknown, D = unknown>(endpoint: string, data: D, 
     },
     ...options,
   })
-  
+
   if (!response.ok) {
     logError(`Failed to fetch ${url}: ${response.statusText}`)
     throw new Error(`Failed to fetch ${url}: ${response.statusText}`)
   }
-  
+
   let json: T
   try {
     json = await response.json()

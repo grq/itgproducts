@@ -7,7 +7,7 @@ export const RootLayout = observer(function RootLayout() {
   const { isLoading } = rootStore.authStore
 
   if (isLoading) {
-      return <LoadingLayout />
+    return <LoadingLayout />
   }
 
   return <Outlet />

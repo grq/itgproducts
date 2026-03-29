@@ -9,5 +9,5 @@ export const endpoint = {
     single: (id: number) => `products/${id}`,
     categories: 'products/categories',
     category: (category: string) => `products/category/${category}`,
-  }
+  },
 }

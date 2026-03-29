@@ -22,7 +22,7 @@ export class ProductsStore {
   isLoading = false
   error: string | null = null
   queryClient?: QueryClient
-  
+
   private updateUrlCallback?: (state: ProductsUrlState) => void
 
   constructor() {
@@ -48,14 +48,14 @@ export class ProductsStore {
   private updateUrl = () => {
     if (this.updateUrlCallback) {
       const state: ProductsUrlState = {}
-      
+
       if (this.currentPage > 1) state.page = this.currentPage
       if (this.searchQuery) state.search = this.searchQuery
       if (this.sortBy) {
         state.sortBy = this.sortBy
         state.sortOrder = this.sortOrder
       }
-      
+
       this.updateUrlCallback(state)
     }
   }
@@ -123,7 +123,7 @@ export class ProductsStore {
       if (params.sortBy) searchParams.set('sortBy', params.sortBy)
       if (params.order) searchParams.set('order', params.order)
 
-      const endpoint = params.q 
+      const endpoint = params.q
         ? `products/search?${searchParams.toString()}`
         : `products?${searchParams.toString()}`
 
@@ -147,14 +147,14 @@ export class ProductsStore {
   }
 
   private searchTimeout?: ReturnType<typeof setTimeout>
-  
+
   debouncedSearch = (input: string) => {
     this.setSearchInput(input)
 
     if (this.searchTimeout) {
       clearTimeout(this.searchTimeout)
     }
-    
+
     this.searchTimeout = setTimeout(() => {
       this.setSearchQuery(input)
     }, 300)
