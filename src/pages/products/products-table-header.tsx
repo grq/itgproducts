@@ -1,9 +1,10 @@
 import { observer } from 'mobx-react-lite'
-import { PlusCircle, RefreshCw } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { CardTitle } from '@/components/ui/card'
 import { rootStore } from '@/stores'
 import { cn } from '@/lib/utils'
+import { AddProductDialog } from '@/pages/products/add-product-dialog'
 
 export const ProductsTableHeader = observer(function ProductsTableHeader() {
   const productsStore = rootStore.productsStore
@@ -23,10 +24,7 @@ export const ProductsTableHeader = observer(function ProductsTableHeader() {
             'animate-spin': productsStore.isFetching,
           })} />
         </Button>
-        <Button>
-          <PlusCircle />
-          Добавить
-        </Button>
+        <AddProductDialog />
       </div>
     </div>
   )
