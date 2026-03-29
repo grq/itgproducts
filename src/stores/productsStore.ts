@@ -1,5 +1,6 @@
 import { makeAutoObservable, runInAction } from 'mobx'
 import { QueryClient } from '@tanstack/react-query'
+import type { RowSelectionState, SortingState } from '@tanstack/react-table'
 import { get } from '@/api/get'
 import type { Product, ProductsResponse, ProductsSearchParams } from '@/interfaces'
 
@@ -20,8 +21,11 @@ export class ProductsStore {
   sortBy?: string
   sortOrder: 'asc' | 'desc' = 'asc'
   isLoading = false
+  isFetching = false
   error: string | null = null
   queryClient?: QueryClient
+
+  rowSelection: RowSelectionState = {}
 
   private updateUrlCallback?: (state: ProductsUrlState) => void
 
@@ -68,6 +72,19 @@ export class ProductsStore {
     return (this.currentPage - 1) * this.itemsPerPage
   }
 
+  get tableSorting(): SortingState {
+    if (!this.sortBy) return []
+    return [{ id: this.sortBy, desc: this.sortOrder === 'desc' }]
+  }
+
+  setRowSelection = (
+    updaterOrValue: RowSelectionState | ((old: RowSelectionState) => RowSelectionState)
+  ) => {
+    const next =
+      typeof updaterOrValue === 'function' ? updaterOrValue(this.rowSelection) : updaterOrValue
+    this.rowSelection = next
+  }
+
   setCurrentPage = (page: number) => {
     this.currentPage = page
     this.updateUrl()
@@ -94,11 +111,14 @@ export class ProductsStore {
   }
 
   fetchProducts = async () => {
-    if (this.isLoading) return
+    if (this.isFetching) return
 
     runInAction(() => {
-      this.isLoading = true
+      this.isFetching = true
       this.error = null
+      if (this.products.length === 0) {
+        this.isLoading = true
+      }
     })
 
     try {
@@ -133,11 +153,13 @@ export class ProductsStore {
         this.products = response.products
         this.total = response.total
         this.isLoading = false
+        this.isFetching = false
       })
     } catch (error) {
       runInAction(() => {
         this.error = error instanceof Error ? error.message : 'Ошибка загрузки продуктов'
         this.isLoading = false
+        this.isFetching = false
       })
     }
   }

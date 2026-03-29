@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { ProductsPage } from '@/pages/ProductsPage'
+import { ProductsPage } from '@/pages/products'
 
 const productsSearchSchema = z.object({
   page: z.number().min(1).optional().catch(undefined),

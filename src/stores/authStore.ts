@@ -14,12 +14,16 @@ export class AuthStore {
   isLoading = true
   queryClient: QueryClient | null = null
 
+  isAuthenticated = Boolean(Cookies.get(AUTH_TOKEN_COOKIE_KEY))
+
   constructor() {
     makeAutoObservable(this)
   }
 
-  get isAuthenticated() {
-    return this.user !== null
+  private syncAuthFromCookie() {
+    runInAction(() => {
+      this.isAuthenticated = Boolean(Cookies.get(AUTH_TOKEN_COOKIE_KEY))
+    })
   }
 
   setQueryClient(queryClient: QueryClient) {
@@ -33,6 +37,7 @@ export class AuthStore {
       runInAction(() => {
         this.isLoading = false
       })
+      this.syncAuthFromCookie()
       return
     }
 
@@ -42,6 +47,7 @@ export class AuthStore {
         this.user = sessionUser
         this.isLoading = false
       })
+      this.syncAuthFromCookie()
 
       if (this.queryClient) {
         this.queryClient.setQueryData(queryKeys.auth.me(), sessionUser)
@@ -58,6 +64,7 @@ export class AuthStore {
         this.user = null
         this.isLoading = false
       })
+      this.syncAuthFromCookie()
     }
   }
 
@@ -81,6 +88,7 @@ export class AuthStore {
         image: authResponse.image,
       }
     })
+    this.syncAuthFromCookie()
 
     if (this.queryClient) {
       this.queryClient.setQueryData(queryKeys.auth.me(), authResponse)
@@ -97,8 +105,8 @@ export class AuthStore {
     runInAction(() => {
       this.user = null
     })
+    this.syncAuthFromCookie()
   }
 }
 
-// Singleton instance for direct usage (if needed)
 export const authStore = new AuthStore()

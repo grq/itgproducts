@@ -24,7 +24,9 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <div className="flex min-h-0 flex-1 flex-col">
+        <RouterProvider router={router} />
+      </div>
     </QueryClientProvider>
   )
 }
