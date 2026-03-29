@@ -49,7 +49,6 @@
   /* Login screen (Figma-aligned), use via bg-login-* / text-login-* / shadow-login-* */
   --color-login-canvas: var(--login-canvas);
   --color-login-heading: var(--login-heading);
-  --color-login-subtitle: var(--login-subtitle);
   --color-login-link: var(--login-link);
   --color-login-primary: var(--login-primary);
   --color-login-primary-ring: var(--login-primary-ring);
@@ -57,7 +56,6 @@
   --color-login-input-bg: var(--login-input-bg);
   --color-login-muted: var(--login-muted);
   --color-login-footer: var(--login-footer);
-  --color-login-separator: var(--login-separator);
   --shadow-login-card: var(--login-card-shadow);
   --shadow-login-button: var(--login-button-shadow);
   --radius-login-card-outer: var(--login-card-outer-radius);
@@ -117,7 +115,6 @@
   /* Login page tokens */
   --login-canvas: #f9f9f9;
   --login-heading: #232323;
-  --login-subtitle: #e0e0e0;
   --login-link: #242edb;
   --login-primary: #242edb;
   --login-primary-ring: #367aff;
@@ -125,7 +122,6 @@
   --login-input-bg: #ffffff;
   --login-muted: #9c9c9c;
   --login-footer: #6c6c6c;
-  --login-separator: #ebebeb;
   --login-card-shadow: 0 24px 32px rgba(0, 0, 0, 0.04);
   --login-button-shadow: 0 8px 8px rgba(54, 122, 255, 0.03);
   /* Figma: внешняя «капсула» — 40px скругление, 6px padding, только тень */

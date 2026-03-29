@@ -246,13 +246,6 @@ export function LoginPage() {
             </span>
           </AuthCardFooter>
         </AuthCard>
-
-        <nav
-          className="fixed right-3 bottom-3 z-10 text-xs text-login-link underline"
-          aria-label="Макеты"
-        >
-          <Link to="/">Товары</Link>
-        </nav>
       </main>
     </Form>
   )

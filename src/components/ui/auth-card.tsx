@@ -34,7 +34,7 @@ const authCardInnerVariants = cva(
 )
 
 interface AuthCardProps
-  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof authCardOuterVariants> {}
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof authCardOuterVariants> { }
 
 function AuthCard({ className, size, children, ...props }: AuthCardProps) {
   return (
@@ -92,7 +92,7 @@ function AuthCardDescription({ className, ...props }: React.HTMLAttributes<HTMLP
   return (
     <p
       data-slot="auth-card-description"
-      className={cn('text-[18px] font-medium leading-normal text-login-subtitle', className)}
+      className={cn('text-[18px] font-medium leading-normal text-muted-foreground', className)}
       {...props}
     />
   )
@@ -125,9 +125,9 @@ function AuthCardDivider({ className, children, ...props }: React.HTMLAttributes
       className={cn('flex w-full items-center gap-2.5', className)}
       {...props}
     >
-      <div className="h-px flex-1 bg-login-separator" />
-      <span className="text-base font-medium text-login-separator">{children}</span>
-      <div className="h-px flex-1 bg-login-separator" />
+      <div className="h-px flex-1 bg-muted-foreground" />
+      <span className="text-base font-medium text-muted-foreground">{children}</span>
+      <div className="h-px flex-1 bg-muted-foreground" />
     </div>
   )
 }
