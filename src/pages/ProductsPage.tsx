@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { observer } from 'mobx-react-lite'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate, useSearch } from '@tanstack/react-router'
+import type { ProductsSearch } from '@/routes/index'
 import {
   flexRender,
   getCoreRowModel,
@@ -113,16 +114,38 @@ const StockBadge = ({ stock }: { stock: number; availabilityStatus: string }) =>
 export const ProductsPage = observer(function ProductsPage() {
   const { user, logout } = rootStore.authStore
   const productsStore = rootStore.productsStore
-  const [searchInput, setSearchInput] = useState('')
+  const navigate = useNavigate()
+  const search = useSearch({ from: '/' }) as ProductsSearch
+  
   const [sorting, setSorting] = useState<SortingState>([])
   const [rowSelection, setRowSelection] = useState({})
 
   useEffect(() => {
+    productsStore.setUpdateUrlCallback((state) => {
+      navigate({
+        to: '/',
+        search: state,
+        replace: true,
+      })
+    })
+  }, [productsStore, navigate])
+
+  useEffect(() => {
+    productsStore.initFromUrl(search)
+    
+    if (search.sortBy) {
+      setSorting([{
+        id: search.sortBy,
+        desc: search.sortOrder === 'desc'
+      }])
+    } else {
+      setSorting([])
+    }
+
     productsStore.fetchProducts()
-  }, [productsStore])
+  }, [productsStore, search])
 
   const handleSearchChange = useCallback((value: string) => {
-    setSearchInput(value)
     productsStore.debouncedSearch(value)
   }, [productsStore])
 
@@ -409,7 +432,7 @@ export const ProductsPage = observer(function ProductsPage() {
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Поиск товаров..."
-                  value={searchInput}
+                  value={productsStore.searchInput}
                   onChange={(event) => handleSearchChange(event.target.value)}
                   className="pl-8 max-w-sm"
                 />

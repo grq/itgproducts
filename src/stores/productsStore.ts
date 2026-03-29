@@ -3,17 +3,27 @@ import { QueryClient } from '@tanstack/react-query'
 import { get } from '@/api/get'
 import type { Product, ProductsResponse, ProductsSearchParams } from '@/interfaces'
 
+export interface ProductsUrlState {
+  page?: number
+  search?: string
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
+}
+
 export class ProductsStore {
   products: Product[] = []
   total = 0
   currentPage = 1
   itemsPerPage = 10
   searchQuery = ''
+  searchInput = ''
   sortBy?: string
   sortOrder: 'asc' | 'desc' = 'asc'
   isLoading = false
   error: string | null = null
   queryClient?: QueryClient
+  
+  private updateUrlCallback?: (state: ProductsUrlState) => void
 
   constructor() {
     makeAutoObservable(this)
@@ -21,6 +31,33 @@ export class ProductsStore {
 
   setQueryClient = (client: QueryClient) => {
     this.queryClient = client
+  }
+
+  setUpdateUrlCallback = (callback: (state: ProductsUrlState) => void) => {
+    this.updateUrlCallback = callback
+  }
+
+  initFromUrl = (urlState: ProductsUrlState) => {
+    this.currentPage = urlState.page || 1
+    this.searchQuery = urlState.search || ''
+    this.searchInput = urlState.search || ''
+    this.sortBy = urlState.sortBy
+    this.sortOrder = urlState.sortOrder || 'asc'
+  }
+
+  private updateUrl = () => {
+    if (this.updateUrlCallback) {
+      const state: ProductsUrlState = {}
+      
+      if (this.currentPage > 1) state.page = this.currentPage
+      if (this.searchQuery) state.search = this.searchQuery
+      if (this.sortBy) {
+        state.sortBy = this.sortBy
+        state.sortOrder = this.sortOrder
+      }
+      
+      this.updateUrlCallback(state)
+    }
   }
 
   get totalPages() {
@@ -33,18 +70,26 @@ export class ProductsStore {
 
   setCurrentPage = (page: number) => {
     this.currentPage = page
+    this.updateUrl()
     this.fetchProducts()
+  }
+
+  setSearchInput = (input: string) => {
+    this.searchInput = input
   }
 
   setSearchQuery = (query: string) => {
     this.searchQuery = query
-    this.currentPage = 1 // Reset to first page on search
+    this.searchInput = query
+    this.currentPage = 1
+    this.updateUrl()
     this.fetchProducts()
   }
 
   setSorting = (field?: string, order: 'asc' | 'desc' = 'asc') => {
     this.sortBy = field
     this.sortOrder = order
+    this.updateUrl()
     this.fetchProducts()
   }
 
@@ -101,16 +146,17 @@ export class ProductsStore {
     this.fetchProducts()
   }
 
-  // Debounced search
   private searchTimeout?: ReturnType<typeof setTimeout>
   
-  debouncedSearch = (query: string) => {
+  debouncedSearch = (input: string) => {
+    this.setSearchInput(input)
+
     if (this.searchTimeout) {
       clearTimeout(this.searchTimeout)
     }
     
     this.searchTimeout = setTimeout(() => {
-      this.setSearchQuery(query)
+      this.setSearchQuery(input)
     }, 300)
   }
 }
