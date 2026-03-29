@@ -12,7 +12,7 @@ export const AuthSessionSync = observer(function AuthSessionSync() {
   const unauthPaths = ['/login']
 
   useEffect(() => {
-    if (!isAuthenticated && !unauthPaths.includes(pathname)) {
+    if (!isLoading && !isAuthenticated && !unauthPaths.includes(pathname)) {
       void navigate({
         to: '/login',
         search: { redirect: returnHref },
@@ -21,7 +21,7 @@ export const AuthSessionSync = observer(function AuthSessionSync() {
       return
     }
 
-    if (isAuthenticated && unauthPaths.includes(pathname)) {
+    if (!isLoading && isAuthenticated && unauthPaths.includes(pathname)) {
       void navigate({
         to: '/',
         replace: true,

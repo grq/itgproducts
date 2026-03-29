@@ -16,14 +16,14 @@ export const ProductsPagination = observer(function ProductsPagination() {
   const productsStore = rootStore.productsStore
   const busy = productsStore.isFetching
 
-  if (productsStore.totalPages <= 1) return null
-
   const visiblePages = useMemo(() => {
     const delta = 2
-    const range = []
-    const rangeWithDots = []
+    const range: number[] = []
+    const rangeWithDots: (number | '...')[] = []
     const currentPage = productsStore.currentPage
     const totalPages = productsStore.totalPages
+
+    if (totalPages <= 1) return rangeWithDots
 
     for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
       range.push(i)
@@ -45,6 +45,8 @@ export const ProductsPagination = observer(function ProductsPagination() {
 
     return rangeWithDots
   }, [productsStore.currentPage, productsStore.totalPages])
+
+  if (productsStore.totalPages <= 1) return null
 
   return (
     <Pagination className="mx-0 w-auto max-w-none justify-end">
